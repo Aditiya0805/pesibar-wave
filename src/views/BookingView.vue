@@ -122,6 +122,7 @@
                   id="book-date"
                   class="form-control"
                   v-model="bookingStore.date"
+                  :min="todayDate"
                   :class="{ 'is-invalid': errors.date }"
                 >
                 <span v-if="errors.date" class="form-error-msg">{{ errors.date }}</span>
@@ -232,8 +233,8 @@
           <!-- Navigation Action Buttons -->
           <div class="booking-nav-buttons">
             <button
+              type="button"
               class="btn btn-secondary"
-              :disabled="bookingStore.currentStep === 1"
               @click="prevStep"
             >
               <i class="fa-solid fa-arrow-left"></i> {{ langStore.t('booking.backBtn') }}
@@ -354,10 +355,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/bookingStore'
 import { useLangStore } from '@/stores/langStore'
 import { downloadBookingPdf, buildWhatsAppLink } from '@/lib/bookingProof'
 
+const router = useRouter()
 const bookingStore = useBookingStore()
 const langStore = useLangStore()
 
@@ -428,6 +431,14 @@ const selectPackage = (key) => {
   bookingStore.setPackage(key)
 }
 
+const todayDate = computed(() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
+
 const validateStep2 = () => {
   errors.value = {}
   if (!bookingStore.name.trim()) {
@@ -441,6 +452,10 @@ const validateStep2 = () => {
   }
   if (!bookingStore.date) {
     errors.value.date = langStore.t('booking.errDate')
+  } else if (bookingStore.date < todayDate.value) {
+    errors.value.date = langStore.isEn
+      ? 'Visit date cannot be in the past'
+      : 'Tanggal kunjungan tidak boleh di masa lalu'
   }
   return Object.keys(errors.value).length === 0
 }
@@ -464,6 +479,13 @@ const prevStep = () => {
   if (bookingStore.currentStep > 1) {
     bookingStore.currentStep -= 1
     window.scrollTo({ top: 100, behavior: 'smooth' })
+  } else {
+    // If on step 1, navigate back to the previous page or to home
+    if (window.history.state && window.history.state.back) {
+      router.back()
+    } else {
+      router.push('/')
+    }
   }
 }
 </script>

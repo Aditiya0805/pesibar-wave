@@ -42,7 +42,7 @@
         </div>
         <div class="search-input-group">
           <label for="search-date"><i class="fa-solid fa-calendar"></i> {{ langStore.t('hero.dateLabel') }}</label>
-          <input type="date" id="search-date" v-model="selectedDate">
+          <input type="date" id="search-date" v-model="selectedDate" :min="todayDate">
         </div>
         <div class="search-input-group">
           <label for="search-guests"><i class="fa-solid fa-users"></i> {{ langStore.t('hero.guestsLabel') }}</label>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/bookingStore'
 import { useLangStore } from '@/stores/langStore'
@@ -82,6 +82,14 @@ const langStore = useLangStore()
 const selectedPackage = ref('')
 const selectedDate = ref('')
 const selectedGuests = ref('1')
+
+const todayDate = computed(() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
 
 const handleSearch = () => {
   if (selectedPackage.value) {

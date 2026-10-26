@@ -1,13 +1,13 @@
 <template>
   <header class="header" id="header">
+    <!-- Backdrop for mobile menu -->
+    <div v-if="mobileMenuOpen" class="mobile-nav-backdrop" @click="closeMobileMenu"></div>
+
     <div class="container">
-      <router-link to="/" class="logo" id="logoLink" @click="closeMobileMenu">
+      <router-link to="/" class="logo" id="logoLink" @click="handleLogoClick">
         <img class="brand-logo" src="/assets/images/logo-icon.svg" alt="Pesibar Wave" width="40" height="40" />
         <span class="logo-text">Pesibar <span class="logo-accent">Wave</span></span>
       </router-link>
-
-      <!-- Backdrop for mobile menu -->
-      <div v-if="mobileMenuOpen" class="mobile-nav-backdrop" @click="closeMobileMenu"></div>
 
       <!-- Nav Menu (Desktop & Mobile Drawer) -->
       <nav class="nav-wrapper" :class="{ 'open': mobileMenuOpen }">
@@ -24,7 +24,7 @@
           </li>
           <li>
             <a href="#peta" class="nav-link" :class="{ active: currentSection === 'peta' }" @click.prevent="navigateSection('peta')">
-              <i class="fa-solid fa-earth-asia"></i> {{ langStore.t('nav.map3d') }}
+              <i class="fa-solid fa-earth-asia nav-icon-mobile"></i> {{ langStore.t('nav.map3d') }}
             </a>
           </li>
           <li>
@@ -103,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLangStore } from '@/stores/langStore'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
@@ -122,14 +122,43 @@ const closeMobileMenu = () => {
   mobileMenuOpen.value = false
 }
 
-const navigateSection = (sectionId) => {
+const handleLogoClick = () => {
   closeMobileMenu()
+  if (route.path === '/') {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    currentSection.value = 'home'
+  }
+}
+
+const navigateSection = async (sectionId) => {
+  closeMobileMenu()
+  const targetId = sectionId === 'hero' ? 'hero' : sectionId
   currentSection.value = sectionId === 'hero' ? 'home' : sectionId
-  
-  // Scroll to the section element
-  const el = document.getElementById(sectionId)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
+
+  if (route.path !== '/') {
+    // When on another route (e.g. /booking or /detail/:id), navigate to homepage with target hash
+    await router.push({ path: '/', hash: targetId === 'hero' ? '' : `#${targetId}` })
+
+    setTimeout(() => {
+      if (targetId === 'hero') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        const el = document.getElementById(targetId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+    }, 120)
+  } else {
+    // Already on homepage
+    if (targetId === 'hero') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    const el = document.getElementById(targetId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 }
 
@@ -137,14 +166,14 @@ const navigateSection = (sectionId) => {
 const handleScroll = () => {
   const header = document.getElementById('header')
   const scrollPos = window.scrollY
-  
+
   // Toggle .scrolled class for navbar color transition
   if (scrollPos > 50) {
     header?.classList.add('scrolled')
   } else {
     header?.classList.remove('scrolled')
   }
-  
+
   if (route.path !== '/') return
   const sections = ['hero', 'destinasi', 'peta', 'paket', 'pemandu', 'galeri', 'artikel', 'tentang']
   const scrollPosNav = scrollPos + 200
@@ -161,6 +190,18 @@ const handleScroll = () => {
     }
   }
 }
+
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath === '/') {
+      handleScroll()
+    } else {
+      currentSection.value = ''
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })

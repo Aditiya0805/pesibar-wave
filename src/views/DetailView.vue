@@ -383,10 +383,13 @@ const bookPackage = (pkgId) => {
 }
 
 watch(
-  () => destination.value,
-  (newVal) => {
-    if (newVal) {
-      activeImage.value = newVal.cover_img || newVal.coverImg
+  () => [destination.value, langStore.currentLang],
+  ([newDest]) => {
+    if (newDest) {
+      activeImage.value = newDest.cover_img || newDest.coverImg
+      langStore.setDocumentTitle(newDest.name)
+    } else if (!dataStore.loading) {
+      langStore.setDocumentTitle(langStore.t('detail.notFoundTitle'))
     }
     if (rawDestination.value) {
       reviewStore.fetchReviews(rawDestination.value.id)

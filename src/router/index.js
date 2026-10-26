@@ -4,6 +4,7 @@ import DetailView from '@/views/DetailView.vue'
 import BookingView from '@/views/BookingView.vue'
 import AdminView from '@/views/AdminView.vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useLangStore } from '@/stores/langStore'
 
 const routes = [
   {
@@ -39,10 +40,14 @@ const router = createRouter({
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) {
-      return {
-        el: to.hash,
-        behavior: 'smooth'
-      }
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            el: to.hash,
+            behavior: 'smooth'
+          })
+        }, 120)
+      })
     }
     if (savedPosition) {
       return savedPosition
@@ -64,6 +69,18 @@ router.beforeEach((to) => {
   }
 
   return true
+})
+
+// Dynamic document title update
+router.afterEach((to) => {
+  const langStore = useLangStore()
+  if (to.name === 'Home') {
+    langStore.setDocumentTitle()
+  } else if (to.name === 'Booking') {
+    langStore.setDocumentTitle(langStore.t('nav.bookNow'))
+  } else if (to.name === 'Admin') {
+    langStore.setDocumentTitle('Admin Portal')
+  }
 })
 
 export default router

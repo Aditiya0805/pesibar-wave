@@ -67,9 +67,21 @@ export const useLangStore = defineStore('lang', () => {
     setLang(currentLang.value === 'id' ? 'en' : 'id')
   }
 
+  const setDocumentTitle = (customTitle = '') => {
+    if (customTitle) {
+      document.title = `${customTitle} | Pesibar Wave`
+    } else {
+      document.title = t('meta.title')
+    }
+  }
+
   const updateDocumentMetadata = () => {
     document.documentElement.lang = currentLang.value
-    document.title = t('meta.title')
+
+    // If on homepage, use localized brand meta title
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      document.title = t('meta.title')
+    }
 
     const setMeta = (selector, value) => {
       const el = document.querySelector(selector)
@@ -316,6 +328,8 @@ export const useLangStore = defineStore('lang', () => {
     t,
     setLang,
     toggleLang,
+    setDocumentTitle,
+    updateDocumentMetadata,
     formatCurrency,
     getPackageInfo,
     getLocalizedDestination
